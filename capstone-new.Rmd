@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r message=FALSE, echo=FALSE}
-setwd("~/Desktop/dscapstone/")
+setwd("~/Desktop/dscap//")
 library(quanteda)
 library(readtext)
 library(stringr)

@@ -128,8 +128,15 @@ $(document).ready(function () {
 
 
 <pre><code>##           used (Mb) gc trigger  (Mb) max used  (Mb)
-## Ncells 1855813 99.2    3205452 171.2  2164898 115.7
-## Vcells 2964153 22.7    4701432  35.9  3335991  25.5</code></pre>
+## Ncells 1855837 99.2    3205452 171.2  2164898 115.7
+## Vcells 2964243 22.7    4701432  35.9  3336080  25.5</code></pre>
+<pre><code>##    Length Class      Mode
+## n1 2      data.table list
+## n2 2      data.table list
+## n3 2      data.table list
+## n4 2      data.table list
+## n5 2      data.table list
+## n6 2      data.table list</code></pre>
 <pre class="r"><code>clearInput &lt;- function(input) {
   ## &quot;Go on a romantic date at the&quot;
   out &lt;- stringr::str_to_lower(input)
@@ -158,12 +165,10 @@ doPredict &lt;- function(normInput) {
   }
 
   search_str &lt;- c()
-  
   chr &lt;- nwords
+  
   while(chr &gt; 0) {
-      
     idx &lt;- chr:nwords
-      
     search_str &lt;- append(search_str, paste0(sent_chunks[, idx], collapse = &quot;_&quot;))
     chr &lt;- chr - 1
   }

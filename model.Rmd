@@ -8,7 +8,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ```{r message=FALSE, echo=FALSE, warning=FALSE}
-setwd("~/Desktop/dscapstone/")
+
+# R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
+# https://www.quora.com/What-is-backoff-in-NLP
+# https://stackoverflow.com/questions/14630335/how-to-select-r-data-table-rows-based-on-substring-match-a-la-sql-like
+
+setwd("~/Desktop/dscap/")
 library(quanteda)
 library(readtext)
 library(stringr)
@@ -18,6 +23,7 @@ gc()
 
 
 db <- readRDS("db.rds")
+summary(db)
 ```
 
 
