@@ -1,0 +1,208 @@
+---
+title: "Capstone-new"
+author: "Sergii Sorokolat"
+date: "8/15/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, echo=FALSE}
+setwd("~/Desktop/dscapstone/")
+library(quanteda)
+library(readtext)
+library(stringr)
+library(glue)
+library(data.table)
+gc()
+```
+
+```{r}
+readAndSampleFile <- function(fileName, sampleSize) {
+    print(glue("sampling from file: {file} \n  sample size: {sz}", file = fileName, sz = sampleSize))
+    con <- file(fileName, open = "r", encoding = "UTF-8")
+    lines <- readLines(con)
+    
+    idxs <- sample(1:length(lines), sampleSize)
+    vals <- c()
+    
+    vals <- append(vals, stringr::str_to_lower(lines[idxs]))
+    
+    # len <- length(lines)
+    #  for (i in 1:len) {
+    #     if (i %in% idxs) {
+    #        vals <- append(vals, stringr::str_to_lower(lines[i]))
+    #        print(glue("sampling from file: {file}   ---   {curr}/{sz}", file = fileName, sz = len, curr = i))
+    #     }
+    #  }
+    close(con)
+    vals
+}
+
+sampleAndSave <- function(outfile, s_size) {
+  
+  samples <- c()
+  samples <- append(samples, readAndSampleFile(fileName = "/Users/usr/Desktop/final/en_US/en_US.blogs.txt", s_size))
+  samples <- append(samples, readAndSampleFile(fileName = "/Users/usr/Desktop/final/en_US/en_US.news.txt", s_size))
+  samples <- append(samples, readAndSampleFile(fileName = "/Users/usr/Desktop/final/en_US/en_US.twitter.txt", s_size))
+  
+  saveRDS(samples, outfile)
+  rm(samples)
+}
+
+# percent of data for sampling
+pct <- 30
+
+total_size <- 4269678
+s_size <- round((total_size * (pct / 100) / 3))
+out_fname <- glue::glue("copr_sample_{pct}prcnt.rds", pct = pct)
+
+##sampleAndSave(out_fname, s_size)
+
+##rm(list = ls())
+## gc()
+
+# filter <- read.csv("sanityfilter_en.txt", header = FALSE, sep = "\n", as.is = TRUE)$V1
+# raw <- readRDS(out_fname)
+
+## build the corpus
+# corp <- corpus(raw)
+
+## build tokens and clean
+# tkns30 <- tokens(corp, remove_symbols = TRUE, remove_numbers = TRUE, remove_punct = TRUE, remove_twitter = TRUE, remove_url = TRUE)
+# tokens_filtered <- tokens_remove(tkns30, filter, case_insensitive = TRUE)
+
+tkns_file <- glue::glue("tokens_sample_{pct}prcnt.rds", pct = pct)
+
+
+
+#saveRDS(tokens_filtered, tkns_file)
+#tokens30 <- readRDS(tkns_file)
+
+buildNgrams <- function(tokens30) {
+    # ########################################
+    # gc()
+    # print("building ngrams.. 2")
+    # 
+    # ngram2 <- tokens_ngrams(tokens30, n = 2)
+    # 
+    # print("saving ngrams... 2 ")
+    # saveRDS(ngram2, "ngram2.rds")
+    # 
+    # rm(ngram2)
+    # gc()
+    # ##########################################
+    # 
+    # 
+    # ########################################
+    # print("building ngrams.. 3")
+    # 
+    # ngram3 <- tokens_ngrams(tokens30, n = 3)
+    # 
+    # print("saving ngrams... 3 ")
+    # saveRDS(ngram3, "ngram3.rds")
+    # 
+    # rm(ngram3)
+    # gc()
+    # ##########################################
+    # 
+    # 
+    # ########################################
+    # print("building ngrams.. 4")
+    # 
+    # ngram4 <- tokens_ngrams(tokens30, n = 4)
+    # 
+    # print("saving ngrams... 4 ")
+    # saveRDS(ngram4, "ngram4.rds")
+    # 
+    # rm(ngram4)
+    # gc()
+    # ##########################################
+    # 
+    # 
+    # ########################################
+    # print("building ngrams.. 5")
+    # 
+    # ngram5 <- tokens_ngrams(tokens30, n = 5)
+    # 
+    # print("saving ngrams... 5 ")
+    # saveRDS(ngram5, "ngram5.rds")
+    # 
+    # rm(ngram5)
+    # gc()
+    # ##########################################
+    # 
+    # 
+    # ########################################
+    # print("building ngrams.. 6")
+    # 
+    # ngram6 <- tokens_ngrams(tokens30, n = 6)
+    # 
+    # print("saving ngrams... 6 ")
+    # saveRDS(ngram6, "ngram6.rds")
+    # 
+    # rm(ngram6)
+    # gc()
+    # ##########################################
+
+}
+
+# ng$n2 <- readRDS("ngram2.rds")
+# ng$n3 <- readRDS("ngram3.rds")
+# ng$n4 <- readRDS("ngram4.rds")
+# ng$n5 <- readRDS("ngram5.rds")
+# ng$n6 <- readRDS("ngram6.rds")
+
+
+## dt[ like(k, "hello_")]
+
+ngramToDataTable <- function(ngram, fname) {
+  df_m <- dfm(ngram)
+  df_m <- dfm_trim(df_m, min_termfreq = 3)
+  out <- topfeatures(df_m, n = nfeat(df_m))
+  
+  features <- names(out)
+  names(out) <- NULL
+  
+  dt <- data.table(feat = features, freq = out)
+  
+  saveRDS(dt, fname)
+  
+  rm(list=ls())
+  gc()
+}
+
+
+
+
+
+#  dt1 <- readRDS("dt_freq/dt1.rds")
+# > db <- NULL
+# > db$n1 <- dt1
+# > db$n2 <- readRDS("dt_freq/dt2.rds")
+# > db$n3 <- readRDS("dt_freq/dt3.rds")
+# > db$n4 <- readRDS("dt_freq/dt4.rds")
+# > db$n5 <- readRDS("dt_freq/dt5.rds")
+# > db$n6 <- readRDS("dt_freq/dt6.rds")
+# 
+#  > object.size(db)/1024^2
+# 275.2 
+# > saveRDS(db, "db.rds")
+
+
+db <- readRDS("db.rds")
+summary(db)
+```
+
+
+
+
+
+
+
+
+
+
+

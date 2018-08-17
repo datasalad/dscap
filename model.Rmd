@@ -1,0 +1,115 @@
+---
+title: "Capstone Model"
+author: "Sergii Sorokolat"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r message=FALSE, echo=FALSE, warning=FALSE}
+setwd("~/Desktop/dscapstone/")
+library(quanteda)
+library(readtext)
+library(stringr)
+library(glue)
+library(data.table)
+gc()
+
+
+db <- readRDS("db.rds")
+```
+
+
+```{r}
+
+clearInput <- function(input) {
+  ## "Go on a romantic date at the"
+  out <- stringr::str_to_lower(input)
+  out <- stringr::str_replace_all(out, "[[:punct:]]", "")
+  out <- stringr::str_replace_all(out, "[[:cntrl:]]", "")
+  out <- stringr::str_replace_all(out, "[[:digit:]]", "")
+  out <- stringr::str_squish(out)
+}
+
+
+doPredict <- function(normInput) {
+  sent_chunks <- stringr::str_split(normInput, " ", simplify = TRUE)
+  # 
+  #      [,1] [,2] [,3] [,4]       [,5]   [,6] [,7] 
+  # [1,] "go" "on" "a"  "romantic" "date" "at" "the"
+  
+  nwords <- ncol(sent_chunks)
+  max_pred <- 5
+    
+  if (nwords == 0 )
+    return("")
+
+  if (nwords > max_pred) {
+    sent_chunks <- matrix(sent_chunks[, ((nwords - max_pred) + 1):nwords], nrow = 1)
+    nwords <- ncol(sent_chunks)
+  }
+
+  search_str <- c()
+  chr <- nwords
+  
+  while(chr > 0) {
+    idx <- chr:nwords
+    search_str <- append(search_str, paste0(sent_chunks[, idx], collapse = "_"))
+    chr <- chr - 1
+  }
+  
+  search_str
+  
+
+  #"?"
+}
+
+predictWord <- function(input) {
+  pred <- doPredict(clearInput(input))
+  glue("{input}  -->  {pred}", input = input, pred = pred)
+}
+```
+
+
+
+
+
+
+```{r}
+
+
+examples <- c(
+                  #"The guy in front of me just bought a pound of bacon, a bouquet, and a case of",
+                  #"You're the reason why I smile everyday. Can you follow me please? It would mean the",
+                  #"Hey sunshine, can you follow me and make me the",
+                  "Very early observations on the Bills game: Offense still struggling but the",
+                  "Go on a romantic date at the"
+                  #"Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my",
+                  #"Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some",
+                  #"After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little",
+                  #"Be grateful for the good times and keep the faith during the",
+                  #"If this isn't the cutest thing you've ever seen, then you must be",
+                  
+                  #"When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
+              )
+
+
+summary(db)
+
+for (i in 1:length(examples)) {
+ 
+   p <- predictWord(examples[i])
+   print(p)
+   print("--------------------------")
+  
+}
+```
+
+
+
+
+
+
+
+

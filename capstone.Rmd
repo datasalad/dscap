@@ -1,0 +1,312 @@
+---
+title: "Data science capstone: milestone report."
+author: "Sergii Sorokolat"
+date: "8/5/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+The goal of the capstone project is to build an app and a model for predicting a text based on a user's input. The predictive model will be built using a large collection of text collected from various sources - news, blogs and twitter. This report showcases an exploratory analysis done on the data provided by SwiftKey and highligts key next steps for the project.
+
+## Dataset
+Due to a large size of original dataset, it was randomly sampled by 50k lines of text from each of document. 
+These samples were then combined into a new dataset for further processing.
+
+### 1. Define a function for reading from a file and sampling a small portion of the data
+
+```{r}
+readAndSampleFile <- function(fileName, sampleSize) {
+    
+    con <- file(fileName, open = "r", encoding = "UTF-8")
+    lines <- readLines(con)
+    
+    idxs <- sample(1:length(lines), sampleSize)
+    vals <- c()
+    
+     for (i in 1:length(lines)) {
+        if (i %in% idxs) {
+           vals <- append(vals, lines[i])
+        }
+     }
+    close(con)
+    vals
+}
+```
+
+### 2. Read and sample from the original dataset
+
+Summary of the original dataset:
+```{r warning=FALSE, message=FALSE}
+
+setwd("~/Desktop/dscapstone/")
+
+# bl <- readLines("final/en_US/en_US.blogs.txt")
+# nw <- readLines("final/en_US/en_US.news.txt")
+# tw <- readLines("final/en_US/en_US.twitter.txt")
+# 
+# blWords <- sum(sapply(gregexpr("\\S+", bl), length))
+# nwWords <- sum(sapply(gregexpr("\\S+", nw), length))
+# twWords <- sum(sapply(gregexpr("\\S+", tw), length))
+# 
+# b <- file.info("final/en_US/en_US.blogs.txt")$size / 1024 / 1024
+# n <- file.info("final/en_US/en_US.news.txt")$size / 1024 / 1024
+# t <- file.info("final/en_US/en_US.twitter.txt")$size / 1024 / 1024
+# 
+# 
+# blLength <- length(bl)
+# nwLength <- length(nw)
+# twLength <- length(tw)
+# 
+# 
+# d <- data.frame(file_name = c("en_US.blogs.txt","en_US.news.txt","en_US.twitter.txt"),
+#         size = c(round(b, digits = 3), 
+#                      round(n,digits = 3), 
+#                      round(t, digits = 3)),
+#         linesCount = c(blLength, nwLength, twLength),
+#         wordsCount = c(blWords, nwWords, twWords))
+# 
+# colnames(d) <- c("File", "File Size (Mb))", "Line Count", "Word Count")
+# print(d)
+
+```
+
+```{r warning=FALSE, message=FALSE, eval=FALSE}
+library(tidyverse)
+
+set.seed(7152018)
+
+## sample size
+s <- 50000
+
+samples <- c()
+samples <- append(samples, readAndSampleFile(fileName = "final/en_US/en_US.blogs.txt", s))
+samples <- append(samples, readAndSampleFile(fileName = "final/en_US/en_US.news.txt", s))
+samples <- append(samples, readAndSampleFile(fileName = "final/en_US/en_US.twitter.txt", s))
+
+## cleanup
+gc()
+
+saveRDS(samples, "samples150k.rds")
+```
+
+```{r}
+samples <- readRDS("samples150k.rds")
+summary(samples)
+```
+
+
+## 3. Profanity filtering
+
+The list of word for filtering was obtained from https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words
+
+```{r}
+## profanity filtering
+removeBadWords <- function(t, pattern) {
+  for (i in 1:nrow(t)) {
+    if (t[i, 2] == TRUE) { 
+      t[i,1] <- gsub(pattern, "*", t[i,1])
+    }
+  }
+  t
+}
+```
+
+```{r message=FALSE, eval=FALSE}
+
+filter <- read.csv("sanityfilter_en.txt", header = FALSE, sep = "\n", as.is = TRUE)$V1
+
+## to lowercase
+t <- tbl_df(samples)
+t <- mutate(t, value = str_to_lower(value))
+
+## build the grep filter
+f1 <- c()
+for (i in 1:length(filter)) {
+  ## \\<word\\>
+  word <- paste("\\<", filter[i] ,"\\>", sep = "")
+  f1 <- append(f1, word)
+}
+f <- paste(f1, sep = "", collapse = "|")
+t$sanity_failed <- grepl(paste("(", f, ")", sep = ""), t$value)
+# ##t$value <- gsub(paste("(", f, ")", sep = ""), "0", t$value, fixed = TRUE)
+
+##t <-readRDS("samples150k-sanityfilter.rds")
+# nrow(t[t$sanity_failed,])
+#
+saveRDS(t, "filtered.rds")
+
+
+
+```
+
+```{r eval=FALSE}
+samplesFiltered <- readRDS("filtered.rds")
+t <- tbl_df(samplesFiltered)
+nrow(t[t$sanity_failed,])
+
+filter <- read.csv("sanityfilter_en.txt", header = FALSE, sep = "\n", as.is = TRUE)$V1
+f1 <- c()
+for (i in 1:length(filter)) {
+  ## \\<word\\>
+  word <- paste("\\<", filter[i] ,"\\>", sep = "")
+  f1 <- append(f1, word)
+}
+f <- paste(f1, sep = "", collapse = "|")
+
+t <- removeBadWords(t, paste("(", f, ")", sep = ""))
+saveRDS(t, "preprocessed_needs_rm_spec_chars.rds")
+```
+
+### 4.Text preprocessing and tokenization
+
+In order to perform text cleansing, I removed special characters, punctiation, numbers, extra whitespace and and made it lowercase.
+The next step is to build ngrams of one, two and three words.
+
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+library(tidyverse)
+library(tm)
+library(RWeka)
+
+t <- tbl_df(readRDS("preprocessed_needs_rm_spec_chars.rds"))
+nrow(t[t$sanity_failed,])
+
+corp <- VCorpus(VectorSource(t$value))
+
+corp <- tm_map(corp, content_transformer(function(x, pattern) gsub(pattern, "'", x)),  "’|‘|'|’")
+corp <- tm_map(corp, content_transformer(function(x, pattern) gsub(pattern, "", x)),  "“|”|–|…|--|—")
+corp <- tm_map(corp, removePunctuation, preserve_intra_word_dashes = TRUE, preserve_intra_word_contractions = TRUE)
+corp <- tm_map(corp, removeNumbers)
+#corp <- tm_map(corp, removeWords, stopwords("english"))
+#corp <- tm_map(corp, stemDocument)
+               
+corp <- tm_map(corp, stripWhitespace)
+
+ngramtoken1 <- function(x) NGramTokenizer(x, Weka_control(min = 1, max = 1))
+ngramtoken2 <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
+ngramtoken3 <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
+ngramtoken4 <- function(x) NGramTokenizer(x, Weka_control(min = 4, max = 4))
+
+ngrammatr1 <- TermDocumentMatrix(corp, control = list(tokenize = ngramtoken1))
+ngrammatr2 <- TermDocumentMatrix(corp, control = list(tokenize = ngramtoken2))
+ngrammatr3 <- TermDocumentMatrix(corp, control = list(tokenize = ngramtoken3))
+ngrammatr4 <- TermDocumentMatrix(corp, control = list(tokenize = ngramtoken4))
+
+gc()
+
+```
+
+```{r}
+preprocessed <- NULL
+
+```
+
+
+### Unigrams
+```{r}
+library(ggplot2)
+library(tm)
+library(RWeka)
+freqTerms <- findFreqTerms(ngrammatr1, lowfreq = 3500)
+termFrequency <- rowSums(as.matrix(ngrammatr1[freqTerms,]))
+termFrequency <- data.frame(ngrm=names(termFrequency), frequency=termFrequency)
+
+preprocessed$termFrequency1 <- termFrequency
+
+g <- ggplot(termFrequency, aes(x=reorder(ngrm, frequency), y=frequency)) +
+    geom_bar(stat = "identity") + coord_flip() +
+    xlab("Ngram") + ylab("Frequency") +
+    labs(title = "Top ngrams by frequency") + theme_bw()
+
+g
+```
+
+
+### Bigrams
+
+```{r}
+library(ggplot2)
+library(tm)
+library(RWeka)
+freqTerms <- findFreqTerms(ngrammatr2, lowfreq = 350)
+termFrequency <- rowSums(as.matrix(ngrammatr2[freqTerms,]))
+termFrequency <- data.frame(ngrm=names(termFrequency), frequency=termFrequency)
+
+preprocessed$termFrequency2 <- termFrequency
+
+g <- ggplot(termFrequency, aes(x=reorder(ngrm, frequency), y=frequency))  +
+    geom_bar(stat = "identity") + coord_flip() +
+    xlab("Ngram") + ylab("Frequency") +
+    labs(title = "Top ngrams by frequency") + theme_bw()
+g
+```
+
+
+### Trigrams
+
+```{r}
+library(ggplot2)
+library(tm)
+library(RWeka)
+freqTerms <- findFreqTerms(ngrammatr3, lowfreq = 50)
+termFrequency <- rowSums(as.matrix(ngrammatr3[freqTerms,]))
+termFrequency <- data.frame(ngrm=names(termFrequency), frequency=termFrequency)
+
+preprocessed$termFrequency3 <- termFrequency
+
+g <- ggplot(termFrequency, aes(x=reorder(ngrm, frequency), y=frequency))  +
+    geom_bar(stat = "identity") +  coord_flip() +
+    xlab("Ngram") + ylab("Frequency") +
+    labs(title = "Top ngrams by frequency") + theme_bw()
+
+g
+```
+
+
+### 4-grams
+
+```{r}
+library(ggplot2)
+library(tm)
+library(RWeka)
+freqTerms <- findFreqTerms(ngrammatr4, lowfreq = 25)
+termFrequency <- rowSums(as.matrix(ngrammatr4[freqTerms,]))
+termFrequency <- data.frame(ngrm=names(termFrequency), frequency=termFrequency)
+
+preprocessed$termFrequency4 <- termFrequency
+
+g <- ggplot(termFrequency, aes(x=reorder(ngrm, frequency), y=frequency))  +
+    geom_bar(stat = "identity") +  coord_flip() +
+    xlab("Ngram") + ylab("Frequency") +
+    labs(title = "Top ngrams by frequency") + theme_bw()
+
+g
+```
+
+
+### 5. Plans
+
+1. Build a model to handle unseen n-grams - in some cases people will want to type a combination of words that does not appear in the corpora. Build a model to handle cases where a particular n-gram isn't observed.
+2. Build predictive model(s) using the tokens from n-grams.
+3. Develop Shiny app to make word predictions based on user's input.
+
+
+## Save preprocessed data
+
+```{r}
+
+preprocessed$corpus <- corp
+preprocessed$ngrammatr1 <- ngrammatr1
+preprocessed$ngrammatr2 <- ngrammatr2
+preprocessed$ngrammatr3 <- ngrammatr3
+preprocessed$ngrammatr4 <- ngrammatr4
+
+saveRDS(preprocessed, "preprocessed.rds")
+
+gc()
+```
+
+
