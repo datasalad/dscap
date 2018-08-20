@@ -18,7 +18,7 @@ shinyUI(fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
-      textInput("usrInput", "Please enter text here", "let me"),
+      textInput("usrInput", "Please enter text here", "Hello. How are ..."),
       submitButton("Predict")
     ),
     

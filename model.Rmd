@@ -217,7 +217,7 @@ for (i in 1:length(examples)) {
 # 
 #   t <- tbl_df(full)
 # 
-#   opt <- filter(t, freq >= 10)
+#   opt <- filter(t, freq >= 25)
 #   d <- data.table(feat = opt$feat, freq = opt$freq)
 #   d
 # }
@@ -231,7 +231,7 @@ for (i in 1:length(examples)) {
 # dbOp$n5 <- dbOpt(db$n5)
 # dbOp$n6 <- dbOpt(db$n6)
 # 
-# saveRDS(dbOp, "dbopt10.rds")
+# saveRDS(dbOp, "dbopt25.rds")
   
 # > p <- "let"
 # > while(TRUE) { p <- paste0(paste0(" ", p), " ", predictWord(p)); print(p) }

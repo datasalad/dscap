@@ -4,7 +4,8 @@ library(stringr)
 library(glue)
 library(data.table)
 
-db <- readRDS("dbopt10.rds")
+#db <- readRDS("dbopt10.rds")
+db <- readRDS("dbopt25.rds")
 
 clearInput <- function(input) {
   ## "Go on a romantic date at the"
