@@ -39,6 +39,79 @@ clearInput <- function(input) {
 }
 
 
+dbLookup <- function(dt, term, ngnum) {
+  cnd <- dt[like(feat, paste0("^", term))]
+  
+  s <- cnd[which.max(cnd$freq), ]$feat
+  k <- str_split(s, "_", simplify = TRUE)
+  
+  #print(k)
+  ret <- ""
+  
+  if (ncol(k) > 0)
+   ret <- k[1, ncol(k)]
+  
+  
+  
+  scoreTermAppeared <- sum(cnd$freq)
+  
+  p <- paste0("^", term, "_", ret)
+  
+  scoreTermAppearedPlusPred <- 0
+  scoreTermAppearedPlusPred <- sum(dt[like(feat, p)]$freq)
+  
+  if (scoreTermAppeared == 0)
+    scoreTermAppeared = 0.0000001
+  
+  if (ngnum == 2) {
+    score <- 0.4 * 0.4 * 0.4 * scoreTermAppearedPlusPred / scoreTermAppeared
+  } else if( ngnum == 3) {
+    score <- 0.4 * 0.4 * scoreTermAppearedPlusPred / scoreTermAppeared
+  } else if( ngnum == 4) {
+    score <- 0.4 * scoreTermAppearedPlusPred / scoreTermAppeared
+  } else {
+    score <-  scoreTermAppearedPlusPred / scoreTermAppeared
+  }
+
+  
+  result <- NULL
+  result$score <- score
+  result$term <- ret
+  result
+}
+
+findBestCandAndScore <- function(current_term){
+  #candidates <- tibble::add_row(candidates, term = k$term, score = k$score)
+  # db lookup
+  
+  m <- str_split(current_term, "_", simplify = TRUE)
+  ng <- ncol(m) + 1
+  
+  #print(current_term)
+  
+  cand <- NULL
+  
+  if (ng == 2) {
+    cand <- dbLookup(db$n2, current_term, 2)
+  } else if (ng == 3) {
+    cand <- dbLookup(db$n3, current_term, 3)
+  } else if (ng == 4) {
+    cand <- dbLookup(db$n4, current_term, 4)
+  } else if (ng == 5) {
+    cand <- dbLookup(db$n5, current_term, 5) 
+  } else if (ng == 6) {
+    cand <- dbLookup(db$n6, current_term, 6)
+  }
+  
+  
+  
+  ret <- NULL
+  ret$score = cand$score
+  ret$term = cand$term
+  ret
+}
+    
+
 doPredict <- function(normInput) {
   sent_chunks <- stringr::str_split(normInput, " ", simplify = TRUE)
   # 
@@ -65,10 +138,30 @@ doPredict <- function(normInput) {
     chr <- chr - 1
   }
   
-  search_str
+  # for each phrase find candidate with highrst score
+  candidates <- tibble::tibble(term  = "", score = 0)
   
-
-  #"?"
+  for (i in 1:length(search_str)) {
+    current_term <- search_str[i]
+    k <- findBestCandAndScore(current_term)
+    candidates <- tibble::add_row(candidates, term = k$term, score = k$score)
+  }
+  
+  # select candidate with highest score
+  cand <- candidates[-1,]
+  
+  #print(cand)
+  endResult <- ""
+  
+  
+  resLookup <- cand[which.max(cand$score),]
+  
+  endResult <- paste0(resLookup$term, "_", resLookup$score)
+  
+  if (endResult == "")
+    endResult = "not_found_replace_with_something"
+  
+  endResult
 }
 
 predictWord <- function(input) {
@@ -86,18 +179,18 @@ predictWord <- function(input) {
 
 
 examples <- c(
-                  #"The guy in front of me just bought a pound of bacon, a bouquet, and a case of",
-                  #"You're the reason why I smile everyday. Can you follow me please? It would mean the",
-                  #"Hey sunshine, can you follow me and make me the",
+                  "The guy in front of me just bought a pound of bacon, a bouquet, and a case of",
+                  "You're the reason why I smile everyday. Can you follow me please? It would mean the",
+                  "Hey sunshine, can you follow me and make me the",
                   "Very early observations on the Bills game: Offense still struggling but the",
-                  "Go on a romantic date at the"
-                  #"Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my",
-                  #"Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some",
-                  #"After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little",
-                  #"Be grateful for the good times and keep the faith during the",
-                  #"If this isn't the cutest thing you've ever seen, then you must be",
+                  "Go on a romantic date at the",
+                  "Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my",
+                  "Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some",
+                  "After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little",
+                  "Be grateful for the good times and keep the faith during the",
+                  "If this isn't the cutest thing you've ever seen, then you must be",
                   
-                  #"When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
+                  "When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd"
               )
 
 
@@ -110,6 +203,10 @@ for (i in 1:length(examples)) {
    print("--------------------------")
   
 }
+
+## TODO optimize - remove low freqs <= 3
+## n2full <- tbl_df(db$n2)
+## n2opt <- filter(n2full, freq >= 4)
 ```
 
 

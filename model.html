@@ -128,8 +128,8 @@ $(document).ready(function () {
 
 
 <pre><code>##           used (Mb) gc trigger  (Mb) max used  (Mb)
-## Ncells 1855837 99.2    3205452 171.2  2164898 115.7
-## Vcells 2964243 22.7    4701432  35.9  3336080  25.5</code></pre>
+## Ncells 1855909 99.2    3205452 171.2  2164898 115.7
+## Vcells 2964982 22.7    4701432  35.9  3336810  25.5</code></pre>
 <pre><code>##    Length Class      Mode
 ## n1 2      data.table list
 ## n2 2      data.table list
@@ -146,6 +146,79 @@ $(document).ready(function () {
   out &lt;- stringr::str_squish(out)
 }
 
+
+dbLookup &lt;- function(dt, term, ngnum) {
+  cnd &lt;- dt[like(feat, paste0(&quot;^&quot;, term))]
+  
+  s &lt;- cnd[which.max(cnd$freq), ]$feat
+  k &lt;- str_split(s, &quot;_&quot;, simplify = TRUE)
+  
+  #print(k)
+  ret &lt;- &quot;&quot;
+  
+  if (ncol(k) &gt; 0)
+   ret &lt;- k[1, ncol(k)]
+  
+  
+  
+  scoreTermAppeared &lt;- sum(cnd$freq)
+  
+  p &lt;- paste0(&quot;^&quot;, term, &quot;_&quot;, ret)
+  
+  scoreTermAppearedPlusPred &lt;- 0
+  scoreTermAppearedPlusPred &lt;- sum(dt[like(feat, p)]$freq)
+  
+  if (scoreTermAppeared == 0)
+    scoreTermAppeared = 0.0000001
+  
+  if (ngnum == 2) {
+    score &lt;- 0.4 * 0.4 * 0.4 * scoreTermAppearedPlusPred / scoreTermAppeared
+  } else if( ngnum == 3) {
+    score &lt;- 0.4 * 0.4 * scoreTermAppearedPlusPred / scoreTermAppeared
+  } else if( ngnum == 4) {
+    score &lt;- 0.4 * scoreTermAppearedPlusPred / scoreTermAppeared
+  } else {
+    score &lt;-  scoreTermAppearedPlusPred / scoreTermAppeared
+  }
+
+  
+  result &lt;- NULL
+  result$score &lt;- score
+  result$term &lt;- ret
+  result
+}
+
+findBestCandAndScore &lt;- function(current_term){
+  #candidates &lt;- tibble::add_row(candidates, term = k$term, score = k$score)
+  # db lookup
+  
+  m &lt;- str_split(current_term, &quot;_&quot;, simplify = TRUE)
+  ng &lt;- ncol(m) + 1
+  
+  #print(current_term)
+  
+  cand &lt;- NULL
+  
+  if (ng == 2) {
+    cand &lt;- dbLookup(db$n2, current_term, 2)
+  } else if (ng == 3) {
+    cand &lt;- dbLookup(db$n3, current_term, 3)
+  } else if (ng == 4) {
+    cand &lt;- dbLookup(db$n4, current_term, 4)
+  } else if (ng == 5) {
+    cand &lt;- dbLookup(db$n5, current_term, 5) 
+  } else if (ng == 6) {
+    cand &lt;- dbLookup(db$n6, current_term, 6)
+  }
+  
+  
+  
+  ret &lt;- NULL
+  ret$score = cand$score
+  ret$term = cand$term
+  ret
+}
+    
 
 doPredict &lt;- function(normInput) {
   sent_chunks &lt;- stringr::str_split(normInput, &quot; &quot;, simplify = TRUE)
@@ -173,10 +246,30 @@ doPredict &lt;- function(normInput) {
     chr &lt;- chr - 1
   }
   
-  search_str
+  # for each phrase find candidate with highrst score
+  candidates &lt;- tibble::tibble(term  = &quot;&quot;, score = 0)
   
-
-  #&quot;?&quot;
+  for (i in 1:length(search_str)) {
+    current_term &lt;- search_str[i]
+    k &lt;- findBestCandAndScore(current_term)
+    candidates &lt;- tibble::add_row(candidates, term = k$term, score = k$score)
+  }
+  
+  # select candidate with highest score
+  cand &lt;- candidates[-1,]
+  
+  #print(cand)
+  endResult &lt;- &quot;&quot;
+  
+  
+  resLookup &lt;- cand[which.max(cand$score),]
+  
+  endResult &lt;- paste0(resLookup$term, &quot;_&quot;, resLookup$score)
+  
+  if (endResult == &quot;&quot;)
+    endResult = &quot;not_found_replace_with_something&quot;
+  
+  endResult
 }
 
 predictWord &lt;- function(input) {
@@ -184,18 +277,18 @@ predictWord &lt;- function(input) {
   glue(&quot;{input}  --&gt;  {pred}&quot;, input = input, pred = pred)
 }</code></pre>
 <pre class="r"><code>examples &lt;- c(
-                  #&quot;The guy in front of me just bought a pound of bacon, a bouquet, and a case of&quot;,
-                  #&quot;You're the reason why I smile everyday. Can you follow me please? It would mean the&quot;,
-                  #&quot;Hey sunshine, can you follow me and make me the&quot;,
+                  &quot;The guy in front of me just bought a pound of bacon, a bouquet, and a case of&quot;,
+                  &quot;You're the reason why I smile everyday. Can you follow me please? It would mean the&quot;,
+                  &quot;Hey sunshine, can you follow me and make me the&quot;,
                   &quot;Very early observations on the Bills game: Offense still struggling but the&quot;,
-                  &quot;Go on a romantic date at the&quot;
-                  #&quot;Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my&quot;,
-                  #&quot;Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some&quot;,
-                  #&quot;After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little&quot;,
-                  #&quot;Be grateful for the good times and keep the faith during the&quot;,
-                  #&quot;If this isn't the cutest thing you've ever seen, then you must be&quot;,
+                  &quot;Go on a romantic date at the&quot;,
+                  &quot;Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my&quot;,
+                  &quot;Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some&quot;,
+                  &quot;After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little&quot;,
+                  &quot;Be grateful for the good times and keep the faith during the&quot;,
+                  &quot;If this isn't the cutest thing you've ever seen, then you must be&quot;,
                   
-                  #&quot;When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd&quot;
+                  &quot;When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd&quot;
               )
 
 
@@ -214,17 +307,27 @@ summary(db)</code></pre>
    print(&quot;--------------------------&quot;)
   
 }</code></pre>
-<pre><code>## Very early observations on the Bills game: Offense still struggling but the  --&gt;  the
-## Very early observations on the Bills game: Offense still struggling but the  --&gt;  but_the
-## Very early observations on the Bills game: Offense still struggling but the  --&gt;  struggling_but_the
-## Very early observations on the Bills game: Offense still struggling but the  --&gt;  still_struggling_but_the
-## Very early observations on the Bills game: Offense still struggling but the  --&gt;  offense_still_struggling_but_the
+<pre><code>## The guy in front of me just bought a pound of bacon, a bouquet, and a case of  --&gt;  the_0.161111111111111
 ## [1] &quot;--------------------------&quot;
-## Go on a romantic date at the  --&gt;  the
-## Go on a romantic date at the  --&gt;  at_the
-## Go on a romantic date at the  --&gt;  date_at_the
-## Go on a romantic date at the  --&gt;  romantic_date_at_the
-## Go on a romantic date at the  --&gt;  a_romantic_date_at_the
+## You're the reason why I smile everyday. Can you follow me please? It would mean the  --&gt;  world_1
+## [1] &quot;--------------------------&quot;
+## Hey sunshine, can you follow me and make me the  --&gt;  happiest_0.4
+## [1] &quot;--------------------------&quot;
+## Very early observations on the Bills game: Offense still struggling but the  --&gt;  first_0.000660951545811253
+## [1] &quot;--------------------------&quot;
+## Go on a romantic date at the  --&gt;  end_0.0115575699468317
+## [1] &quot;--------------------------&quot;
+## Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my  --&gt;  own_0.16
+## [1] &quot;--------------------------&quot;
+## Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some  --&gt;  time_0.4
+## [1] &quot;--------------------------&quot;
+## After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little  --&gt;  brother_0.0440579710144928
+## [1] &quot;--------------------------&quot;
+## Be grateful for the good times and keep the faith during the  --&gt;  day_0.0104353718448247
+## [1] &quot;--------------------------&quot;
+## If this isn't the cutest thing you've ever seen, then you must be  --&gt;  a_0.190291262135922
+## [1] &quot;--------------------------&quot;
+## When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd  --&gt;  of_1.42499304202616e-05
 ## [1] &quot;--------------------------&quot;</code></pre>
 
 
