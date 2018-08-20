@@ -162,7 +162,7 @@ doPredict <- function(normInput) {
   endResult <- resLookup$term
   
   if (endResult == "")
-    endResult = "not_found_replace_with_something"
+    endResult = db$n1[which.max(db$n1$freq),]$feat
   
   endResult
 }
