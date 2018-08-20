@@ -22,7 +22,9 @@ library(data.table)
 gc()
 
 
-db <- readRDS("db.rds")
+#db <- readRDS("db.rds")
+#db <- readRDS("dbopt.rds")
+db <- readRDS("dbopt10.rds")
 summary(db)
 ```
 
@@ -156,7 +158,8 @@ doPredict <- function(normInput) {
   
   resLookup <- cand[which.max(cand$score),]
   
-  endResult <- paste0(resLookup$term, "_", resLookup$score)
+  #endResult <- paste0(resLookup$term, "_", resLookup$score)
+  endResult <- resLookup$term
   
   if (endResult == "")
     endResult = "not_found_replace_with_something"
@@ -166,7 +169,8 @@ doPredict <- function(normInput) {
 
 predictWord <- function(input) {
   pred <- doPredict(clearInput(input))
-  glue("{input}  -->  {pred}", input = input, pred = pred)
+  #glue("{input}  -->  {pred}", input = input, pred = pred)
+  pred
 }
 ```
 
@@ -197,16 +201,40 @@ examples <- c(
 summary(db)
 
 for (i in 1:length(examples)) {
- 
+
    p <- predictWord(examples[i])
    print(p)
    print("--------------------------")
-  
+
 }
 
 ## TODO optimize - remove low freqs <= 3
 ## n2full <- tbl_df(db$n2)
 ## n2opt <- filter(n2full, freq >= 4)
+
+# library(tidyverse)
+# dbOpt <- function(full) {
+# 
+#   t <- tbl_df(full)
+# 
+#   opt <- filter(t, freq >= 10)
+#   d <- data.table(feat = opt$feat, freq = opt$freq)
+#   d
+# }
+# 
+# dbOp <- NULL
+# 
+# dbOp$n1 <- dbOpt(db$n1)
+# dbOp$n2 <- dbOpt(db$n2)
+# dbOp$n3 <- dbOpt(db$n3)
+# dbOp$n4 <- dbOpt(db$n4)
+# dbOp$n5 <- dbOpt(db$n5)
+# dbOp$n6 <- dbOpt(db$n6)
+# 
+# saveRDS(dbOp, "dbopt10.rds")
+  
+# > p <- "let"
+# > while(TRUE) { p <- paste0(paste0(" ", p), " ", predictWord(p)); print(p) }
 ```
 
 

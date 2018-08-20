@@ -128,8 +128,8 @@ $(document).ready(function () {
 
 
 <pre><code>##           used (Mb) gc trigger  (Mb) max used  (Mb)
-## Ncells 1855909 99.2    3205452 171.2  2164898 115.7
-## Vcells 2964982 22.7    4701432  35.9  3336810  25.5</code></pre>
+## Ncells 1855945 99.2    3205452 171.2  2164898 115.7
+## Vcells 2965184 22.7    4701432  35.9  3337007  25.5</code></pre>
 <pre><code>##    Length Class      Mode
 ## n1 2      data.table list
 ## n2 2      data.table list
@@ -301,34 +301,58 @@ summary(db)</code></pre>
 ## n5 2      data.table list
 ## n6 2      data.table list</code></pre>
 <pre class="r"><code>for (i in 1:length(examples)) {
- 
+
    p &lt;- predictWord(examples[i])
    print(p)
    print(&quot;--------------------------&quot;)
-  
+
 }</code></pre>
-<pre><code>## The guy in front of me just bought a pound of bacon, a bouquet, and a case of  --&gt;  the_0.161111111111111
+<pre><code>## The guy in front of me just bought a pound of bacon, a bouquet, and a case of  --&gt;  the_0.4
 ## [1] &quot;--------------------------&quot;
 ## You're the reason why I smile everyday. Can you follow me please? It would mean the  --&gt;  world_1
 ## [1] &quot;--------------------------&quot;
 ## Hey sunshine, can you follow me and make me the  --&gt;  happiest_0.4
 ## [1] &quot;--------------------------&quot;
-## Very early observations on the Bills game: Offense still struggling but the  --&gt;  first_0.000660951545811253
+## Very early observations on the Bills game: Offense still struggling but the  --&gt;  first_0.000697710744961783
 ## [1] &quot;--------------------------&quot;
-## Go on a romantic date at the  --&gt;  end_0.0115575699468317
+## Go on a romantic date at the  --&gt;  end_0.0142077323180868
 ## [1] &quot;--------------------------&quot;
-## Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my  --&gt;  own_0.16
+## Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my  --&gt;  own_0.4
 ## [1] &quot;--------------------------&quot;
 ## Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some  --&gt;  time_0.4
 ## [1] &quot;--------------------------&quot;
-## After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little  --&gt;  brother_0.0440579710144928
+## After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little  --&gt;  brother_0.16
 ## [1] &quot;--------------------------&quot;
-## Be grateful for the good times and keep the faith during the  --&gt;  day_0.0104353718448247
+## Be grateful for the good times and keep the faith during the  --&gt;  day_0.013666892044174
 ## [1] &quot;--------------------------&quot;
-## If this isn't the cutest thing you've ever seen, then you must be  --&gt;  a_0.190291262135922
+## If this isn't the cutest thing you've ever seen, then you must be  --&gt;  a_0.4
 ## [1] &quot;--------------------------&quot;
-## When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd  --&gt;  of_1.42499304202616e-05
+## When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd  --&gt;  of_0
 ## [1] &quot;--------------------------&quot;</code></pre>
+<pre class="r"><code>## TODO optimize - remove low freqs &lt;= 3
+## n2full &lt;- tbl_df(db$n2)
+## n2opt &lt;- filter(n2full, freq &gt;= 4)
+
+# library(tidyverse)
+# dbOpt &lt;- function(full) {
+# 
+#   t &lt;- tbl_df(full)
+# 
+#   opt &lt;- filter(t, freq &gt;= 10)
+#   d &lt;- data.table(feat = opt$feat, freq = opt$freq)
+#   d
+# }
+# 
+# dbOp &lt;- NULL
+# 
+# dbOp$n1 &lt;- dbOpt(db$n1)
+# dbOp$n2 &lt;- dbOpt(db$n2)
+# dbOp$n3 &lt;- dbOpt(db$n3)
+# dbOp$n4 &lt;- dbOpt(db$n4)
+# dbOp$n5 &lt;- dbOpt(db$n5)
+# dbOp$n6 &lt;- dbOpt(db$n6)
+# 
+# saveRDS(dbOp, &quot;dbopt10.rds&quot;)</code></pre>
 
 
 
