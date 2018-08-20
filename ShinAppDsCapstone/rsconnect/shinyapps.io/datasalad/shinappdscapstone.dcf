@@ -1,0 +1,10 @@
+name: shinappdscapstone
+title:
+username:
+account: datasalad
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 403300
+bundleId: 1544571
+url: https://datasalad.shinyapps.io/shinappdscapstone/
+when: 1534779382.19995
