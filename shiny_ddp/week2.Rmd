@@ -1,0 +1,30 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## May 16, 2018
+
+
+```{r echo=FALSE}
+library(leaflet)
+
+df <- data.frame(
+  lat = c(50.0057, 49.99192, 50.0198),
+  lng = c(36.2288, 36.23205, 36.2470)
+)
+
+ico <- makeIcon(iconUrl = "http://cdn.leafletjs.com/leaflet/v1.3.1/images/marker-icon.png")
+  
+df %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(clusterOptions = markerClusterOptions(), icon = ico)
+  
+
+```
+
+

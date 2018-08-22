@@ -1,0 +1,10 @@
+name: DDP_ShinyApp
+title: DDP_ShinyApp
+username:
+account: datasalad
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 344626
+bundleId: 1378565
+url: https://datasalad.shinyapps.io/DDP_ShinyApp/
+when: 1526557999.33389

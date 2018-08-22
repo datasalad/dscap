@@ -1,0 +1,52 @@
+---
+title: "MPG Demo"
+date: "05/17/2018"
+output: ioslides_presentation
+css: styles.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+
+
+## What's MPG stands for?
+
+*Fuel economy* can be expressed as Units of distance per fixed fuel unit.
+
+Miles per gallon (mpg) is commonly used in the United States, the United Kingdom, and Canada (alongside L/100 km). 
+
+###Why MPG is important?
+
+- It helps you save money on gas prices
+- Higher mpg is better for the environment  
+- Higher mpg makes your car more efficient
+
+## The dataset for the analysis
+In this analysis we used ```mtcars``` dataset in R. The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+```{r, comment="", echo=TRUE}
+head(mtcars[,1:9])
+```
+
+
+## MPG Corellation with other variables
+
+MPG is mostly correlated with the weight of the car, the number of cylinders and the type of transmission.
+```{r, echo = F, message=FALSE, cache=TRUE}
+library(GGally)
+ggpairs(mtcars)
+```
+
+## Summary
+
+Higher mpg makes your car more efficient and  is better for the environment. 
+
+This demo https://datasalad.shinyapps.io/DDP_ShinyApp will help you make the right choice. 
+
+The source code is available on [GitHub.](https://github.com/datasalad/mpgdemo)
+
+Thanks for your time.
+
+
