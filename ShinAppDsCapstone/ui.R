@@ -8,27 +8,33 @@
 #
 
 library(shiny)
+library(shinythemes)
 
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(
+shinyUI(fluidPage(theme = shinytheme("flatly"),
   
   # Application title
   titlePanel("Data Science Capstone Project: Word Prediction"),
-  
+  br(),
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
       textInput("usrInput", "Please enter text here", "Hello. How are ..."),
+      br(),
       submitButton("Predict")
-    ),
+    ,width = "100%"),
     
     
     
     # Show a plot of the generated distribution
     mainPanel(
       
-      h3('Next word'),
-      h2(textOutput("usrOutput"))
+      helpText('Next word'),
+      h2(textOutput("usrOutput")),
+      
+      br()
+      #helpText("Other possible candidates"),
+      #dataTableOutput(outputId = "usrOutputOtherCand")   
     )
   )
 ))

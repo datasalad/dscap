@@ -5,6 +5,6 @@ account: datasalad
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 403300
-bundleId: 1544633
+bundleId: 1548399
 url: https://datasalad.shinyapps.io/shinappdscapstone/
-when: 1534780669.43157
+when: 1534938055.20429
